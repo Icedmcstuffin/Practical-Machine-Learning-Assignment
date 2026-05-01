@@ -1,0 +1,72 @@
+---
+title: "Practical Machine Learning Assignment"
+author: "IcedMcstuffin"
+date: "2026-04-30"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1. Introduction
+In this project, my goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website [here](http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har) (see the section on the Weight Lifting Exercise Dataset).
+
+```{r message = FALSE}
+library(dplyr)
+library(caret)
+```
+
+# 2. Data Cleaning
+Data Cleaning has been performed by collecting all the columns with accelerometer reading (20) and removing the var_accel parameters giving us 16 accelerometer predictors for 4 accelerometers on x,y,z axis and the total accelerometer reading
+```{r echo = TRUE}
+## DATA CLEANING
+# Reading the data and cleaning it to have only accelerometer columns and classe column and setting classe to factor class
+rawtraining <- read.csv("pml-training.csv")
+acceltraining <- select(rawtraining, contains(c("accel", "classe")))
+acceltraining$classe <- as.factor(acceltraining$classe)
+training <- acceltraining[,-c(2,7,12,17)]
+training$classe <- as.factor(training$classe)
+
+rawtesting <- read.csv("pml-testing.csv")
+acceltesting <- select(rawtesting, contains("accel"))
+testing <- acceltesting[,-c(2,7,12,17)]
+```
+
+# 3. Model Selection
+Since there are 5 possible outcomes, we will be checking the random forest predictor model, gradient boosting model and assessing each of its accuracy
+
+For all the test, a 5 fold cross validation is performed by trainControl() function as the training data set has large number of osbervations - 19622.
+
+## 3.1 Random Forest model
+
+```{r cache=TRUE}
+set.seed(3223)
+rfmodel <- train(classe~., data=training, method="rf", trControl = trainControl(method = "cv", number = 5))
+print(rfmodel)
+```
+This shows that the expected out-of-sample accuracy of this model is 0.95 and the error rate is 5%
+
+This is the plot for the Variable importance of each of the predictor.
+```{r}
+plot(varImp(rfmodel))
+```
+
+## 3.2 Gradient Boosting model
+
+```{r cache=TRUE}
+set.seed(3223)
+gbmModel <- train(classe~., data=training, method="gbm", trControl = trainControl(method = "cv", number = 5), verbose = FALSE)
+print(gbmModel)
+```
+This shows that the expected out-of-sample accuracy of this model is 82% and the error rate is 12%
+
+# 4. Conclusion
+After comparing the accuracy of these models, we will choose to select the model because of its out of sample accuracy of 95%
+
+
+
+
+
+
+
